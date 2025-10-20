@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Users, Building2, Settings, Box, FileText } from 'lucide-react';
+import { LayoutGrid, Users, Building2, Settings, FolderTree, ActivitySquare, Briefcase, Box, FileText, ShieldCheck, PiggyBank, Truck, MapPin } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose, currentPage, setCurrentPage }) {
   const handleNavigation = (page) => {
@@ -37,10 +37,52 @@ export default function Sidebar({ isOpen, onClose, currentPage, setCurrentPage }
             onClick={() => handleNavigation('departamentos')}
           />
           <NavItem
+            icon={<Briefcase size={20} />}
+            label="Cargos"
+            isActive={currentPage === 'cargos'}
+            onClick={() => handleNavigation('cargos')}
+          />          
+          <NavItem
             icon={<Users size={20} />}
             label="Empleados"
             isActive={currentPage === 'empleados'}
             onClick={() => handleNavigation('empleados')}
+          />                  
+          <NavItem
+            icon={<ShieldCheck size={20} />}
+            label="Roles"
+            isActive={currentPage === 'roles'}
+            onClick={() => handleNavigation('roles')}
+          />
+          <NavItem
+            icon={<PiggyBank size={20} />}
+            label="Presupuestos"
+            isActive={currentPage === 'presupuestos'}
+            onClick={() => handleNavigation('presupuestos')}
+          />   
+          <NavItem
+            icon={<MapPin size={20} />}
+            label="Ubicaciones"
+            isActive={currentPage === 'ubicaciones'}
+            onClick={() => handleNavigation('ubicaciones')}
+          />
+          <NavItem
+            icon={<Truck size={20} />}
+            label="Proveedores"
+            isActive={currentPage === 'proveedores'}
+            onClick={() => handleNavigation('proveedores')}
+          />       
+          <NavItem
+            icon={<FolderTree size={20} />}
+            label="Categorías"
+            isActive={currentPage === 'categorias'}
+            onClick={() => handleNavigation('categorias')}
+          />
+          <NavItem
+            icon={<ActivitySquare size={20} />}
+            label="Estados"
+            isActive={currentPage === 'estados'}
+            onClick={() => handleNavigation('estados')}
           />
         </nav>
 

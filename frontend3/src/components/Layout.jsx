@@ -6,6 +6,14 @@ import Dashboard from './Dashboard';
 import Settings from './Settings';
 import DepartamentosList from '../pages/departamentos/DepartamentosList'; // <-- NUEVA IMPORTACIÓN
 import ActivosFijosList from '../pages/activos/ActivosFijosList';
+import CargosList from '../pages/cargos/CargosList';
+import EmpleadosList from '../pages/empleados/EmpleadosList';
+import RolesList from '../pages/roles/RolesList';
+import PresupuestosList from '../pages/presupuesto/PresupuestosList';
+import UbicacionesList from '../pages/ubicaciones/UbicacionesList';
+import ProveedoresList from '../pages/proveedores/ProveedoresList';
+import CategoriasActivosList from '../pages/categorias/CategoriasActivosList';
+import EstadosList from '../pages/estados/EstadosList';
 
 export default function Layout() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -28,6 +36,14 @@ export default function Layout() {
           {currentPage === 'dashboard' && <Dashboard />}
           {currentPage === 'departamentos' && <DepartamentosList />} {/* <-- LÍNEA AÑADIDA */}
           {currentPage === 'activos_fijos' && <ActivosFijosList/>}
+          {currentPage === 'cargos' && <CargosList />}
+          {currentPage === 'empleados' && <EmpleadosList />}
+          {currentPage === 'roles' && <RolesList />}
+          {currentPage === 'presupuestos' && <PresupuestosList />}
+          {currentPage === 'ubicaciones' && <UbicacionesList />}
+          {currentPage === 'proveedores' && <ProveedoresList />}
+          {currentPage === 'categorias' && <CategoriasActivosList />}
+          {currentPage === 'estados' && <EstadosList />}
           {currentPage === 'settings' && <Settings />}
           {/* Aquí añadiremos los demás componentes de página */}
         </main>

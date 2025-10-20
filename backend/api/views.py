@@ -49,6 +49,32 @@ class RolesViewSet(BaseTenantViewSet):
     queryset = Roles.objects.all()
     serializer_class = RolesSerializer
 
+class CategoriaActivoViewSet(BaseTenantViewSet):
+    queryset = CategoriaActivo.objects.all()
+    serializer_class = CategoriaActivoSerializer
+
+class EstadoViewSet(BaseTenantViewSet):
+    queryset = Estado.objects.all()
+    serializer_class = EstadoSerializer
+
+class UbicacionViewSet(BaseTenantViewSet):
+    queryset = Ubicacion.objects.all()
+    serializer_class = UbicacionSerializer
+
+class ProveedorViewSet(BaseTenantViewSet):
+    queryset = Proveedor.objects.all()
+    serializer_class = ProveedorSerializer
+
+class PermisosViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet de Solo Lectura para los Permisos.
+    Estos son definidos por el sistema y no pueden ser
+    creados o modificados por los usuarios.
+    """
+    queryset = Permisos.objects.all()
+    serializer_class = PermisosSerializer
+    permission_classes = [IsAuthenticated]
+
 # --- NUEVO VIEWSET PARA LA BITÁCORA/LOG ---
 class LogViewSet(viewsets.ModelViewSet):
     """

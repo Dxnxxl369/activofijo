@@ -64,6 +64,14 @@ DATABASES = {
         'PASSWORD': 'admin123', # La que definiste en SQL
         'HOST': 'localhost',
         'PORT': '5432',
+    },
+    'logs': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'log_db', # El nombre de la BD que creaste en el Paso 1
+        'USER': 'postgres',   # Puedes usar el mismo usuario por ahora
+        'PASSWORD': 'admin123',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -109,3 +117,5 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+DATABASE_ROUTERS = ['api.db_router.LogRouter']

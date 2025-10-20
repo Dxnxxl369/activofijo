@@ -52,9 +52,8 @@ class EmpleadoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Empleado
-        # Excluimos los campos 'write_only' de la lectura por defecto
-        exclude = ('password',) 
-        read_only_fields = ('empresa', 'usuario')
+        fields = '__all__'        
+        read_only_fields = ('empresa',)
 
     def create(self, validated_data):
         username = validated_data.pop('username')
@@ -99,9 +98,38 @@ class RolesSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('empresa',)
 
+class CategoriaActivoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoriaActivo
+        fields = '__all__'
+        read_only_fields = ('empresa',)
+
+class EstadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Estado
+        fields = '__all__'
+        read_only_fields = ('empresa',)
+
+class UbicacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ubicacion
+        fields = '__all__'
+        read_only_fields = ('empresa',)
+
+class ProveedorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Proveedor
+        fields = '__all__'
+        read_only_fields = ('empresa',)
+
+class PermisosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Permisos
+        fields = '__all__'
 # --- NUEVO SERIALIZER PARA LOGS ---
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log
         # Definimos los campos que esperamos recibir del frontend
         fields = ['accion', 'payload']
+
