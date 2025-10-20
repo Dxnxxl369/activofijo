@@ -9,19 +9,40 @@ class EmpresaSerializer(serializers.ModelSerializer):
         model = Empresa
         fields = ['id', 'nombre', 'nit']
 
+#class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+#    @classmethod
+#    def get_token(cls, user):
+#        token = super().get_token(user)
+#        try:
+#            empleado = user.empleado
+#            token['empresa_id'] = str(empleado.empresa.id)
+#            token['empresa_nombre'] = empleado.empresa.nombre
+#            token['nombre_completo'] = f"{user.first_name} {empleado.apellido_p}"
+#        except Empleado.DoesNotExist:
+#            token['empresa_id'] = None
+#            token['empresa_nombre'] = None
+#            token['nombre_completo'] = user.username
+#        return token
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         try:
             empleado = user.empleado
+            # --- AÑADE/ASEGURA ESTAS LÍNEAS ---
+            token['username'] = user.username
+            token['email'] = user.email
+            token['nombre_completo'] = f"{user.first_name} {empleado.apellido_p}"
             token['empresa_id'] = str(empleado.empresa.id)
             token['empresa_nombre'] = empleado.empresa.nombre
-            token['nombre_completo'] = f"{user.first_name} {empleado.apellido_p}"
+            # --- FIN ---
         except Empleado.DoesNotExist:
+            token['username'] = user.username
+            token['email'] = user.email
+            token['nombre_completo'] = user.username
             token['empresa_id'] = None
             token['empresa_nombre'] = None
-            token['nombre_completo'] = user.username
         return token
 
 # --- CLASE FALTANTE AÑADIDA AQUÍ ---
@@ -126,6 +147,77 @@ class PermisosSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permisos
         fields = '__all__'
+
+class RegisterEmpresaSerializer(serializers.Serializer):
+    """
+    Serializer para registrar una nueva empresa y su primer usuario admin.
+    No está ligado a un modelo, solo valida datos de entrada.
+    """
+    # Datos de la Empresa
+    empresa_nombre = serializers.CharField(max_length=100)
+    empresa_nit = serializers.CharField(max_length=20)
+    
+    # Datos del Admin (User)
+    admin_username = serializers.CharField(max_length=100)
+    admin_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    admin_first_name = serializers.CharField(max_length=100)
+    admin_email = serializers.EmailField()
+    
+    # Datos del Admin (Empleado)
+    admin_ci = serializers.CharField(max_length=20)
+    admin_apellido_p = serializers.CharField(max_length=100)
+    admin_apellido_m = serializers.CharField(max_length=100)
+
+    # Datos de Pago (simulados, no los usamos pero los recibimos)
+    card_number = serializers.CharField(write_only=True)
+    card_expiry = serializers.CharField(write_only=True)
+    card_cvc = serializers.CharField(write_only=True)
+
+    def validate_empresa_nombre(self, value):
+        if Empresa.objects.filter(nombre__iexact=value).exists():
+            raise serializers.ValidationError("Ya existe una empresa con este nombre.")
+        return value
+        
+    def validate_empresa_nit(self, value):
+        if Empresa.objects.filter(nit__iexact=value).exists():
+            raise serializers.ValidationError("Ya existe una empresa con este NIT.")
+        return value
+        
+    def validate_admin_username(self, value):
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("Este nombre de usuario ya está en uso.")
+        return value
+
+    def create(self, validated_data):
+        # 1. Crear la Empresa
+        empresa = Empresa.objects.create(
+            nombre=validated_data['empresa_nombre'],
+            nit=validated_data['empresa_nit']
+        )
+        
+        # 2. Crear el User (Admin)
+        user = User.objects.create_user(
+            username=validated_data['admin_username'],
+            password=validated_data['admin_password'],
+            first_name=validated_data['admin_first_name'],
+            email=validated_data['admin_email'],
+            last_name=validated_data['admin_apellido_p'],
+            is_active=True
+        )
+        
+        # 3. Crear el Empleado (Admin) y ligarlo a la Empresa y al User
+        empleado = Empleado.objects.create(
+            usuario=user,
+            empresa=empresa,
+            ci=validated_data['admin_ci'],
+            apellido_p=validated_data['admin_apellido_p'],
+            apellido_m=validated_data['admin_apellido_m'],
+            # (Puedes asignar un Cargo o Rol por defecto si quieres aquí)
+        )
+        
+        # Devolvemos el usuario para poder generar su token
+        return user
+    
 # --- NUEVO SERIALIZER PARA LOGS ---
 class LogSerializer(serializers.ModelSerializer):
     class Meta:

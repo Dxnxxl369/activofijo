@@ -84,6 +84,12 @@ export default function Sidebar({ isOpen, onClose, currentPage, setCurrentPage }
             isActive={currentPage === 'estados'}
             onClick={() => handleNavigation('estados')}
           />
+          <NavItem
+            icon={<FileText size={20} />}
+            label="Reportes"
+            isActive={currentPage === 'reportes'}
+            onClick={() => handleNavigation('reportes')}
+          />
         </nav>
 
         <div className="px-4 py-4 border-t border-theme">

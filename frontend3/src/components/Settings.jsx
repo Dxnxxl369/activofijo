@@ -1,10 +1,32 @@
 // src/components/Settings.jsx
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { Palette } from 'lucide-react';
+import { Palette, Sparkles } from 'lucide-react';
+
+function Toggle({ label, enabled, onChange }) {
+  return (
+    <label 
+      onClick={onChange} // <--- ¡AQUÍ ESTÁ LA CORRECCIÓN!
+      className="flex items-center justify-between cursor-pointer"
+    >
+      <span className="text-primary font-medium">{label}</span>
+      <div
+        className={`relative w-14 h-8 rounded-full p-1 transition-colors ${
+          enabled ? 'bg-accent' : 'bg-tertiary'
+        }`}
+      >
+        <div
+          className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform ${
+            enabled ? 'translate-x-6' : 'translate-x-0'
+          }`}
+        />
+      </div>
+    </label>
+  );
+}
 
 export default function Settings() {
-  const { theme, setTheme, customColor, setCustomColor } = useTheme();
+  const { theme, setTheme, customColor, setCustomColor, glowEnabled, setGlowEnabled } = useTheme();
   const [colorInput, setColorInput] = useState(customColor);
 
   const handleColorChange = (e) => {
@@ -60,7 +82,20 @@ export default function Settings() {
           />
         </div>
       </div>
-
+      <div className="bg-secondary border border-theme rounded-xl p-6 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={24} className="text-accent" />
+            <h2 className="text-xl font-semibold text-primary">Efectos Visuales</h2>
+        </div>
+        <Toggle 
+          label="Activar brillo de neón"
+          enabled={glowEnabled}
+          onChange={() => setGlowEnabled(!glowEnabled)}
+        />
+        <p className="text-sm text-tertiary mt-2">
+          Añade un sutil efecto de brillo a los botones y bordes de color.
+        </p>
+      </div>
       {/* Color Customization (shown when custom theme is selected) */}
       {theme === 'custom' && (
         <div className="bg-secondary border border-theme rounded-xl p-6 mb-6 animate-in fade-in">

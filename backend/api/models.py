@@ -119,9 +119,15 @@ class Presupuesto(models.Model):
 # --- Modelos de Log/Bitácora (Punto 3 del PDF) ---
 class Log(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # No tiene FK a Empresa para que sea un registro global y seguro
     timestamp = models.DateTimeField(auto_now_add=True)
-    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    #usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_constraint=False  # <-- ¡AÑADE ESTA LÍNEA!
+    )
     ip_address = models.GenericIPAddressField()
     accion = models.CharField(max_length=255) # ej: "CREATE: ActivoFijo, ID: xxx"
     tenant_id = models.UUIDField(null=True, blank=True) # Guarda el ID de la empresa afectada

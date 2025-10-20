@@ -14,7 +14,6 @@ export const logAction = async (accion, payload = {}) => {
             accion: accion,
             payload: payload
         });
-        // No necesitamos hacer nada con la respuesta
     } catch (error) {
         // Fallamos silenciosamente.
         // El log no es tan crítico como para detener la acción principal del usuario.

@@ -14,6 +14,7 @@ import UbicacionesList from '../pages/ubicaciones/UbicacionesList';
 import ProveedoresList from '../pages/proveedores/ProveedoresList';
 import CategoriasActivosList from '../pages/categorias/CategoriasActivosList';
 import EstadosList from '../pages/estados/EstadosList';
+import ReportesPage from '../pages/reportes/ReportesPage';
 
 export default function Layout() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -44,6 +45,7 @@ export default function Layout() {
           {currentPage === 'proveedores' && <ProveedoresList />}
           {currentPage === 'categorias' && <CategoriasActivosList />}
           {currentPage === 'estados' && <EstadosList />}
+          {currentPage === 'reportes' && <ReportesPage />}
           {currentPage === 'settings' && <Settings />}
           {/* Aquí añadiremos los demás componentes de página */}
         </main>

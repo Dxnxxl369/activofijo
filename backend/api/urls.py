@@ -19,6 +19,9 @@ router.register(r'proveedores', ProveedorViewSet)
 router.register(r'permisos', PermisosViewSet)
 
 urlpatterns = [
+    path('reportes/activos-preview/', ReporteActivosPreview.as_view(), name='reporte_activos_preview'),
+    path('reportes/activos-export/', ReporteActivosExport.as_view(), name='reporte_activos_export'),    
+    path('register/', RegisterEmpresaView.as_view(), name='register_empresa'),
     path('', include(router.urls)),
     path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

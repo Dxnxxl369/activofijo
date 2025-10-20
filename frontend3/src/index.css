@@ -129,4 +129,15 @@ body {
     @apply transition-colors duration-300;
     color: var(--color-custom);
   }
+  html[data-glow="true"] .bg-accent {
+    box-shadow: 0 0 15px 0px var(--color-custom);
+  }
+  
+  html[data-glow="true"] .border-accent {
+    box-shadow: 0 0 10px 0px var(--color-custom);
+  }
+  
+  html[data-glow="true"] .text-accent {
+    text-shadow: 0 0 8px var(--color-custom);
+  }
 }
