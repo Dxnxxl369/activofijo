@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Building2, Plus, Edit, Trash2, Loader } from 'lucide-react';
 import { getDepartamentos, createDepartamento, updateDepartamento, deleteDepartamento } from '../../api/dataService';
 import Modal from '../../components/Modal';
+import { useNotification } from '../../context/NotificacionContext';
 
 // Formulario para Crear/Editar
 const DepartamentoForm = ({ depto, onSave, onCancel }) => {
@@ -28,41 +29,54 @@ export default function DepartamentosList() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingDepto, setEditingDepto] = useState(null);
+    const { showNotification } = useNotification();
 
     const fetchDepartamentos = async () => {
         try {
             setLoading(true);
             const data = await getDepartamentos();
-            setDepartamentos(data);
-        } catch (error) { console.error("Error al obtener departamentos:", error); }
+            setDepartamentos(data.results || data || []);
+        } catch (error) { 
+            console.error("Error al obtener departamentos:", error); 
+            showNotification('Error al cargar los datos','error');
+        }
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchDepartamentos(); }, []);
+    useEffect(() => { fetchDepartamentos(); }, []);    
 
     const handleSave = async (data) => {
         try {
             if (editingDepto) {
                 await updateDepartamento(editingDepto.id, data);
-            } else {
+                showNotification('Departamento actualizado con éxito');
+            } else {                
                 await createDepartamento(data);
+                showNotification('Departamento creado con éxito');
             }
             fetchDepartamentos();
             setIsModalOpen(false);
-        } catch (error) { console.error("Error al guardar:", error); }
+        } catch (error) { 
+            console.error("Error al guardar:", error); 
+            showNotification('Error al guardar el departamento', 'error');
+        }    
     };
 
     const handleDelete = async (id) => {
         if (window.confirm('¿Seguro que quieres eliminar este departamento?')) {
             try {
                 await deleteDepartamento(id);
+                showNotification('Departamento eliminado con éxito');
                 fetchDepartamentos();
-            } catch (error) { console.error("Error al eliminar:", error); }
+            } catch (error) { 
+                console.error("Error al eliminar:", error); 
+                showNotification('Error al eliminar el departamento','error');
+            }
         }
     };
     
     return (
-        <>
+        <>            
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <div className="mb-8 flex justify-between items-center">
                     <div>

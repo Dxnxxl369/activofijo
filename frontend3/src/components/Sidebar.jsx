@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Users, Building2, Settings } from 'lucide-react';
+import { LayoutGrid, Users, Building2, Settings, Box, FileText } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose, currentPage, setCurrentPage }) {
   const handleNavigation = (page) => {
@@ -24,6 +24,12 @@ export default function Sidebar({ isOpen, onClose, currentPage, setCurrentPage }
             isActive={currentPage === 'dashboard'}
             onClick={() => handleNavigation('dashboard')}
           />
+          <NavItem
+          icon={<Box size={20} />}
+          label="Activos Fijos"
+          isActive={currentPage === 'activos_fijos'}
+          onClick={() => handleNavigation('activos_fijos')}
+        />
           <NavItem
             icon={<Building2 size={20} />}
             label="Departamentos"
@@ -70,6 +76,12 @@ export default function Sidebar({ isOpen, onClose, currentPage, setCurrentPage }
             label="Departamentos"
             isActive={currentPage === 'departamentos'}
             onClick={() => handleNavigation('departamentos')}
+          />
+          <NavItem
+            icon={<Box size={20} />} // <-- NUEVO ITEM
+            label="Activos Fijos"
+            isActive={currentPage === 'activos_fijos'}
+            onClick={() => handleNavigation('activos_fijos')}
           />
           <NavItem
             icon={<Users size={20} />}

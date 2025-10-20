@@ -36,6 +36,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
   );
 }*/
 // src/components/Modal.jsx
+// src/components/Modal.jsx
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';

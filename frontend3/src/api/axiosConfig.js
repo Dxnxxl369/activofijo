@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: 'http://127.0.0.1:8000/api', // Asegúrate de que tu backend corra en esta dirección
+    baseURL: 'http://127.0.0.1:8000/api', // Reemplaza si tu backend corre en otro puerto/IP
 });
 
 export const setAuthToken = (token) => {

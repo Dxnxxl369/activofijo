@@ -1,7 +1,7 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { login as apiLogin } from '../api/authService'; // A crear
-import { setAuthToken } from '../api/axiosConfig'; // A crear
+import { login as apiLogin } from '../api/authService';
+import { setAuthToken } from '../api/axiosConfig';
 
 export const AuthContext = createContext();
 
@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            setAuthToken(token);
+            setAuthToken(token); // Aplica el token si ya existe uno guardado
             setIsAuthenticated(true);
         }
         setLoading(false);
@@ -22,7 +22,11 @@ export const AuthProvider = ({ children }) => {
         const response = await apiLogin({ username, password });
         const { access } = response.data;
         localStorage.setItem('token', access);
-        setAuthToken(access);
+        
+        // --- ¡CORRECCIÓN CLAVE AQUÍ! ---
+        // Aplicamos el token a axios INMEDIATAMENTE después del login.
+        setAuthToken(access); 
+        
         setIsAuthenticated(true);
     };
 
