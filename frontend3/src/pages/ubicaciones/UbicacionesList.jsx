@@ -5,6 +5,7 @@ import { MapPin, Plus, Edit, Trash2, Loader } from 'lucide-react';
 import { getUbicaciones, createUbicacion, updateUbicacion, deleteUbicacion } from '../../api/dataService'; // Asumimos que ya creaste estas funciones
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
+import { usePermissions } from '../../hooks/usePermissions'; 
 
 // --- Componentes de ayuda del Formulario ---
 const FormInput = ({ label, ...props }) => (
@@ -47,6 +48,9 @@ export default function UbicacionesList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUbicacion, setEditingUbicacion] = useState(null);
     const { showNotification } = useNotification();
+    const { hasPermission, loadingPermissions } = usePermissions(); 
+    const canManage = !loadingPermissions && hasPermission('manage_ubicacion');
+
 
     const fetchUbicaciones = async () => {
         try {
@@ -106,9 +110,11 @@ export default function UbicacionesList() {
                         <h1 className="text-4xl font-bold text-primary mb-2">Ubicaciones</h1>
                         <p className="text-secondary">Gestiona las ubicaciones físicas de los activos.</p>
                     </div>
-                    <button onClick={() => { setEditingUbicacion(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nueva Ubicación
-                    </button>
+                    {canManage && (
+                        <button onClick={() => { setEditingUbicacion(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nueva Ubicación
+                        </button>
+                    )}
                 </div>
                 
                 <div className="bg-secondary border border-theme rounded-xl p-4">
@@ -132,10 +138,12 @@ export default function UbicacionesList() {
                             <div className="flex-1">
                                 <p className="text-sm text-primary">{item.detalle || 'Sin detalles'}</p>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setEditingUbicacion(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                            </div>
+                            {canManage && (
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setEditingUbicacion(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>

@@ -129,10 +129,6 @@ export const deleteRol = async (id) => {
     // No hay return
 };
 
-export const getPermisos = async () => {
-    const response = await apiClient.get('/permisos/');
-    return response.data;
-};
 
 // --- Funciones para Presupuestos ---
 export const getPresupuestos = async () => {
@@ -261,36 +257,79 @@ export const deleteEstado = async (id) => {
  * Obtiene los datos de vista previa del reporte en JSON.
  * @param {object} params - Objeto con filtros (departamento_id, fecha_min, fecha_max)
  */
+export const downloadReporteActivos = async (params) => {
+    // Define the correct path relative to the baseURL
+    const urlPath = 'reportes/activos-export/'; 
+
+    console.log(`Attempting GET request to: ${apiClient.defaults.baseURL}/${urlPath}`); // Log URL before try
+    console.log("With parameters:", params); // Log params before try
+
+    try { 
+        const response = await apiClient.get(urlPath, { // Use the correct path variable
+            params,
+            responseType: 'blob',
+        });
+
+        // --- Download Logic (No changes needed here) ---
+        const contentType = response.headers['content-type'];
+        let filename = "reporte.dat";
+        if (params.format === 'excel') {
+            filename = "reporte_activos.xlsx";
+        } else { // Default to PDF
+            filename = "reporte_activos.pdf";
+        }       
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove(); 
+        console.log("Download initiated successfully."); // Log success inside try
+        // --- End Download Logic ---
+
+    } catch (error) {
+        // Log the detailed error from Axios
+        console.error("Axios error during download:", error.toJSON ? error.toJSON() : error);
+        
+        // Re-throw the error so the calling component (.catch or await) knows it failed
+        throw error; 
+    }
+};
+
+// Keep the corrected getReporteActivosPreview function (without leading slash)
 export const getReporteActivosPreview = async (params) => {
-    const response = await apiClient.get('/reportes/activos-preview/', { params });
+    const urlPath = 'reportes/activos-preview/'; // NO leading slash
+    console.log(`Attempting GET request to: ${apiClient.defaults.baseURL}/${urlPath}`);
+    console.log("With parameters:", params);
+    try {
+        const response = await apiClient.get(urlPath, { params }); 
+        return response.data; // Return the actual data
+    } catch (error) {
+        console.error("Error fetching report preview:", error.response?.data || error.message);
+        throw error; // Re-throw so the component knows about the error
+    }
+};
+// --- Funciones para Permisos (CRUD Completo) ---
+export const getPermisos = async () => {
+    const response = await apiClient.get('/permisos/');
     return response.data;
 };
 
-/**
- * Descarga el reporte en el formato solicitado (pdf o excel).
- * @param {object} params - Objeto con filtros (departamento_id, fecha_min, fecha_max, format)
- */
-export const downloadReporteActivos = async (params) => {
-    const response = await apiClient.get('/reportes/activos-export/', {
-        params,
-        responseType: 'blob', // ¡Muy importante! Le dice a axios que espere un archivo
-    });
+export const createPermiso = async (data) => {
+    const response = await apiClient.post('/permisos/', data);
+    await logAction('CREATE: Permiso', { id_creado: response.data.id, nombre: data.nombre });
+    return response.data;
+};
 
-    // Determina el nombre del archivo y el tipo
-    const contentType = response.headers['content-type'];
-    let filename = "reporte.dat";
-    if (params.format === 'excel') {
-        filename = "reporte_activos.xlsx";
-    } else {
-        filename = "reporte_activos.pdf";
-    }
+export const updatePermiso = async (id, data) => {
+    const response = await apiClient.put(`/permisos/${id}/`, data);
+    await logAction('UPDATE: Permiso', { id: id, ...data });
+    return response.data;
+};
 
-    // Crea un link temporal para iniciar la descarga
-    const url = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    link.remove(); // Limpia el link
+export const deletePermiso = async (id) => {
+    await apiClient.delete(`/permisos/${id}/`);
+    await logAction('DELETE: Permiso', { id: id });
+    // No hay return
 };

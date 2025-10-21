@@ -1,7 +1,13 @@
 # api/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import *
+
+from .views import (
+    ReporteActivosPreview, ReporteActivosExport, CargoViewSet, DepartamentoViewSet,
+    EmpleadoViewSet, ActivoFijoViewSet, CategoriaActivoViewSet, PresupuestoViewSet, 
+    RolesViewSet, LogViewSet, EstadoViewSet, UbicacionViewSet, ProveedorViewSet, PermisosViewSet,
+    RegisterEmpresaView, MyTokenObtainPairView, UserPermissionsView
+)
 from rest_framework_simplejwt.views import TokenRefreshView
 
 router = DefaultRouter()
@@ -20,9 +26,10 @@ router.register(r'permisos', PermisosViewSet)
 
 urlpatterns = [
     path('reportes/activos-preview/', ReporteActivosPreview.as_view(), name='reporte_activos_preview'),
-    path('reportes/activos-export/', ReporteActivosExport.as_view(), name='reporte_activos_export'),    
+    path('reportes/activos-export/', ReporteActivosExport.as_view(), name='reporte_activos_export'),       
     path('register/', RegisterEmpresaView.as_view(), name='register_empresa'),
     path('', include(router.urls)),
     path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('my-permissions/', UserPermissionsView.as_view(), name='my_permissions'),
 ]

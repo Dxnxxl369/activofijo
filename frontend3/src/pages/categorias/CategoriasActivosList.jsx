@@ -5,6 +5,7 @@ import { FolderTree, Plus, Edit, Trash2, Loader } from 'lucide-react';
 import { getCategoriasActivos, createCategoriaActivo, updateCategoriaActivo, deleteCategoriaActivo } from '../../api/dataService';
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
+import { usePermissions } from '../../hooks/usePermissions'; 
 
 // Formulario para Crear/Editar
 const CategoriaForm = ({ categoria, onSave, onCancel }) => {
@@ -30,6 +31,8 @@ export default function CategoriasActivosList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCategoria, setEditingCategoria] = useState(null);
     const { showNotification } = useNotification();
+    const { hasPermission, loadingPermissions } = usePermissions(); 
+    const canManage = !loadingPermissions && hasPermission('manage_categoriaactivo');
 
     const fetchCategorias = async () => {
         try {
@@ -88,9 +91,11 @@ export default function CategoriasActivosList() {
                         <h1 className="text-4xl font-bold text-primary mb-2">Categorías de Activos</h1>
                         <p className="text-secondary">Organiza los tipos de activos fijos.</p>
                     </div>
-                    <button onClick={() => { setEditingCategoria(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nueva Categoría
-                    </button>
+                    {canManage && (
+                        <button onClick={() => { setEditingCategoria(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nueva Categoría
+                        </button>
+                    )}
                 </div>
                 
                 <div className="bg-secondary border border-theme rounded-xl p-4">
@@ -111,10 +116,12 @@ export default function CategoriasActivosList() {
                                 <p className="font-semibold text-primary">{item.nombre}</p>
                                 <p className="text-sm text-secondary">{item.descripcion || 'Sin descripción'}</p>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setEditingCategoria(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                            </div>
+                            {canManage && (
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setEditingCategoria(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>

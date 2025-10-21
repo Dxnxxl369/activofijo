@@ -5,6 +5,7 @@ import { ActivitySquare, Plus, Edit, Trash2, Loader } from 'lucide-react';
 import { getEstados, createEstado, updateEstado, deleteEstado } from '../../api/dataService';
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
+import { usePermissions } from '../../hooks/usePermissions'; 
 
 // Formulario para Crear/Editar
 const EstadoForm = ({ estado, onSave, onCancel }) => {
@@ -30,6 +31,8 @@ export default function EstadosList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEstado, setEditingEstado] = useState(null);
     const { showNotification } = useNotification();
+    const { hasPermission, loadingPermissions } = usePermissions(); 
+    const canManage = !loadingPermissions && hasPermission('manage_estadoactivo');
 
     const fetchEstados = async () => {
         try {
@@ -88,9 +91,11 @@ export default function EstadosList() {
                         <h1 className="text-4xl font-bold text-primary mb-2">Estados de Activos</h1>
                         <p className="text-secondary">Define los estados de los activos (Nuevo, Usado, etc.).</p>
                     </div>
-                    <button onClick={() => { setEditingEstado(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nuevo Estado
-                    </button>
+                    {canManage && (
+                        <button onClick={() => { setEditingEstado(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nuevo Estado
+                        </button>
+                    )}
                 </div>
                 
                 <div className="bg-secondary border border-theme rounded-xl p-4">
@@ -111,10 +116,12 @@ export default function EstadosList() {
                                 <p className="font-semibold text-primary">{item.nombre}</p>
                                 <p className="text-sm text-secondary">{item.detalle || 'Sin detalles'}</p>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setEditingEstado(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                            </div>
+                            {canManage && (
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setEditingEstado(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>

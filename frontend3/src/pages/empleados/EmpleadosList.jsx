@@ -8,6 +8,7 @@ import {
 } from '../../api/dataService';
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
+import { usePermissions } from '../../hooks/usePermissions';
 
 // --- Componentes de ayuda para el formulario ---
 const FormInput = ({ label, ...props }) => (
@@ -206,6 +207,8 @@ export default function EmpleadosList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEmpleado, setEditingEmpleado] = useState(null);
     const { showNotification } = useNotification();        
+    const { hasPermission, loadingPermissions } = usePermissions(); // <-- Use hook
+    const canManage = !loadingPermissions && hasPermission('manage_empleado');
 
     const fetchEmpleados = async () => {
         try {
@@ -293,9 +296,11 @@ export default function EmpleadosList() {
                         <h1 className="text-4xl font-bold text-primary mb-2">Empleados</h1>
                         <p className="text-secondary">Gestiona el personal de tu empresa.</p>
                     </div>
-                    <button onClick={openCreateModal} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nuevo Empleado
-                    </button>                                    
+                    {canManage && (                    
+                        <button onClick={openCreateModal} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nuevo Empleado
+                        </button>  
+                    )}                                  
                 </div>
                 
                 <div className="bg-secondary border border-theme rounded-xl p-4">
@@ -325,10 +330,12 @@ export default function EmpleadosList() {
                                     <p className="text-primary font-medium flex items-center gap-1.5"><DollarSign size={14} /> {parseFloat(emp.sueldo).toLocaleString('es-BO', { style: 'currency', currency: 'BOB' })}</p>
                                 </div>
                             </div>
-                            <div className="flex gap-2 ml-4">                                
-                                <button onClick={() => openEditModal(emp)} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                <button onClick={() => handleDelete(emp.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                            </div>
+                            {canManage && (
+                                <div className="flex gap-2 ml-4">                                
+                                    <button onClick={() => openEditModal(emp)} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(emp.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>

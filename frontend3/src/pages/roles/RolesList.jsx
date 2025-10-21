@@ -1,10 +1,11 @@
 // src/pages/roles/RolesList.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Plus, Edit, Trash2, Loader } from 'lucide-react';
+import { ShieldCheck, Plus, Edit, Trash2, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getRoles, createRol, updateRol, deleteRol, getPermisos } from '../../api/dataService';
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
+import { usePermissions } from '../../hooks/usePermissions';
 
 // --- Componentes de ayuda del Formulario ---
 const FormInput = ({ label, ...props }) => (
@@ -14,67 +15,158 @@ const FormInput = ({ label, ...props }) => (
     </div>
 );
 
+const PermissionList = ({ title, permissions, onSelect, selectedPermission }) => (
+    <div className="flex-1 border border-theme rounded-lg h-64 overflow-y-auto">
+        <h3 className="text-sm font-semibold text-primary p-3 border-b border-theme sticky top-0 bg-secondary">{title}</h3>
+        <ul className="p-1">
+            {permissions.map(p => (
+                <li 
+                    key={p.id}
+                    onClick={() => onSelect(p)}
+                    // Añade title para el tooltip de descripción
+                    title={p.descripcion} 
+                    className={`p-2 rounded cursor-pointer text-sm hover:bg-tertiary ${selectedPermission?.id === p.id ? 'bg-accent text-white' : 'text-secondary'}`}
+                >
+                    {p.nombre}
+                </li>
+            ))}
+            {permissions.length === 0 && <li className="p-2 text-xs text-tertiary text-center">Vacío</li>}
+        </ul>
+    </div>
+);
+
 // --- Formulario de Rol ---
 const RolForm = ({ rol, onSave, onCancel }) => {
     const [nombre, setNombre] = useState(rol?.nombre || '');
-    // Guardamos los IDs de los permisos seleccionados
-    const [permisosSeleccionados, setPermisosSeleccionados] = useState(rol?.permisos?.map(p => p.id) || rol?.permisos || []);
+    // Guardamos los IDs de los permisos asignados
+    const [assignedPermissionIds, setAssignedPermissionIds] = useState(
+        // CORRECCIÓN: Extrae los IDs correctamente al editar
+        () => rol?.permisos?.map(p => typeof p === 'object' ? p.id : p) || [] 
+    );
     
-    const [permisosDisponibles, setPermisosDisponibles] = useState([]);
+    const [allPermissions, setAllPermissions] = useState([]);
     const [loadingDeps, setLoadingDeps] = useState(true);
     const { showNotification } = useNotification();
+    
+    // Estados para la UI de dos listas
+    const [selectedAvailable, setSelectedAvailable] = useState(null);
+    const [selectedAssigned, setSelectedAssigned] = useState(null);
 
+    // Cargar todos los permisos disponibles
     useEffect(() => {
-        const loadPermisos = async () => {
-            try {
-                setLoadingDeps(true);
-                const data = await getPermisos();
-                setPermisosDisponibles(data.results || data || []);
-            } catch (error) {
-                console.error("Error al cargar permisos:", error);
-                showNotification('Error al cargar la lista de permisos', 'error');
-            } finally {
-                setLoadingDeps(false);
-            }
-        };
-        loadPermisos();
-    }, [showNotification]);
+    const loadPermisos = async () => {
+        try {
+            setLoadingDeps(true);
+            const data = await getPermisos();
+            // Check what 'data' looks like HERE
+            console.log("Permisos fetched:", data); 
+            setAllPermissions(data.results || data || []);
+        } catch (error) {
+            // Log the specific error
+            console.error("Error DETALLADO al cargar permisos:", error.response?.data || error.message || error); 
+            showNotification('Error al cargar la lista de permisos', 'error');
+            setAllPermissions([]); // Ensure it's an empty array on error
+        } finally {
+            setLoadingDeps(false); // Make sure this always runs
+            console.log("setLoadingDeps set to false"); // Add log here
+        }
+    };
+    loadPermisos();
+}, [showNotification]);
 
-    const handleMultiSelectChange = (e) => {
-        const { options } = e.target;
-        const selectedValues = Array.from(options).filter(option => option.selected).map(option => option.value);
-        setPermisosSeleccionados(selectedValues);
+    // Calcular listas de disponibles y asignados (usando useMemo para eficiencia)
+    const { availablePermissions, assignedPermissions } = useMemo(() => {
+        const assigned = allPermissions.filter(p => assignedPermissionIds.includes(p.id));
+        const available = allPermissions.filter(p => !assignedPermissionIds.includes(p.id));
+        return { availablePermissions: available, assignedPermissions: assigned };
+    }, [allPermissions, assignedPermissionIds]);
+
+    // Handlers para seleccionar en las listas
+    const handleSelectAvailable = (permiso) => {
+        setSelectedAvailable(permiso);
+        setSelectedAssigned(null); // Deselecciona en la otra lista
+    };
+    const handleSelectAssigned = (permiso) => {
+        setSelectedAssigned(permiso);
+        setSelectedAvailable(null); // Deselecciona en la otra lista
+    };
+
+    // Handlers para mover permisos entre listas
+    const handleAddPermission = () => {
+        if (selectedAvailable) {
+            setAssignedPermissionIds(prev => [...prev, selectedAvailable.id]);
+            setSelectedAvailable(null);
+        }
+    };
+    const handleRemovePermission = () => {
+        if (selectedAssigned) {
+            setAssignedPermissionIds(prev => prev.filter(id => id !== selectedAssigned.id));
+            setSelectedAssigned(null);
+        }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave({ nombre, permisos: permisosSeleccionados });
+        onSave({ nombre, permisos: assignedPermissionIds }); // Envía solo los IDs
     };
 
     if (loadingDeps) {
+
         return <div className="flex justify-center items-center h-48"><Loader className="animate-spin text-accent" /></div>;
+
     }
 
+    // --- RENDERIZADO DEL FORMULARIO CON DOS LISTAS ---
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <FormInput label="Nombre del Rol" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Administrador" required />
             
-            <div className="flex flex-col">
-                <label className="text-sm font-medium text-secondary mb-1.5">Permisos</label>
-                <select 
-                    multiple 
-                    value={permisosSeleccionados} 
-                    onChange={handleMultiSelectChange} 
-                    className="w-full p-3 h-40 bg-tertiary rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                    {permisosDisponibles.map(p => (
-                        <option key={p.id} value={p.id}>{p.nombre}</option>
-                    ))}
-                </select>
-                <p className="text-xs text-tertiary mt-1">Mantén Ctrl (o Cmd en Mac) para seleccionar varios.</p>
+            <div className="flex flex-col space-y-2">
+                 <label className="text-sm font-medium text-secondary">Asignar Permisos</label>
+                 <div className="flex items-center gap-2">
+                    {/* Lista de Permisos Disponibles */}
+                    <PermissionList 
+                        title="Disponibles"
+                        permissions={availablePermissions}
+                        onSelect={handleSelectAvailable}
+                        selectedPermission={selectedAvailable}
+                    />
+                    
+                    {/* Botones para Mover */}
+                    <div className="flex flex-col gap-2">
+                        <button 
+                            type="button" 
+                            onClick={handleAddPermission} 
+                            disabled={!selectedAvailable}
+                            className="p-2 bg-tertiary rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Añadir permiso seleccionado"
+                        >
+                            <ChevronRight size={20} className="text-primary"/>
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={handleRemovePermission} 
+                            disabled={!selectedAssigned}
+                            className="p-2 bg-tertiary rounded hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Quitar permiso seleccionado"
+                        >
+                            <ChevronLeft size={20} className="text-primary"/>
+                        </button>
+                    </div>
+
+                    {/* Lista de Permisos Asignados */}
+                     <PermissionList 
+                        title="Asignados"
+                        permissions={assignedPermissions}
+                        onSelect={handleSelectAssigned}
+                        selectedPermission={selectedAssigned}
+                    />
+                 </div>
+                 <p className="text-xs text-tertiary">Haz clic en un permiso para seleccionarlo, luego usa los botones para moverlo. Pasa el cursor sobre un permiso para ver su descripción.</p>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            {/* Botones Guardar/Cancelar */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-theme">
                 <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-primary hover:bg-tertiary">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-accent text-white font-semibold rounded-lg hover:bg-opacity-90">Guardar</button>
             </div>
@@ -90,6 +182,8 @@ export default function RolesList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRol, setEditingRol] = useState(null);
     const { showNotification } = useNotification();
+    const { hasPermission, loadingPermissions } = usePermissions(); 
+    const canManage = !loadingPermissions && hasPermission('manage_rol');
 
     const fetchRoles = async () => {
         try {
@@ -149,9 +243,11 @@ export default function RolesList() {
                         <h1 className="text-4xl font-bold text-primary mb-2">Roles</h1>
                         <p className="text-secondary">Gestiona los roles y permisos de los usuarios.</p>
                     </div>
-                    <button onClick={() => { setEditingRol(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nuevo Rol
-                    </button>
+                    {canManage && (
+                        <button onClick={() => { setEditingRol(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nuevo Rol
+                        </button>
+                    )}
                 </div>
                 
                 <div className="bg-secondary border border-theme rounded-xl p-4">
@@ -174,10 +270,12 @@ export default function RolesList() {
                                     {rol.permisos.length} {rol.permisos.length === 1 ? 'permiso' : 'permisos'}
                                 </p>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setEditingRol(rol); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                <button onClick={() => handleDelete(rol.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                            </div>
+                            {canManage && (
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setEditingRol(rol); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(rol.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>

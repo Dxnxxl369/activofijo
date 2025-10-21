@@ -5,6 +5,7 @@ import { Building2, Plus, Edit, Trash2, Loader } from 'lucide-react';
 import { getDepartamentos, createDepartamento, updateDepartamento, deleteDepartamento } from '../../api/dataService';
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
+import { usePermissions } from '../../hooks/usePermissions';
 
 // Formulario para Crear/Editar
 const DepartamentoForm = ({ depto, onSave, onCancel }) => {
@@ -30,6 +31,8 @@ export default function DepartamentosList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingDepto, setEditingDepto] = useState(null);
     const { showNotification } = useNotification();
+    const { hasPermission, loadingPermissions } = usePermissions(); // <-- Use hook
+    const canManage = !loadingPermissions && hasPermission('manage_departamento'); // <-- Check permission
 
     const fetchDepartamentos = async () => {
         try {
@@ -83,9 +86,11 @@ export default function DepartamentosList() {
                         <h1 className="text-4xl font-bold text-primary mb-2">Departamentos</h1>
                         <p className="text-secondary">Gestiona las áreas de tu empresa.</p>
                     </div>
-                    <button onClick={() => { setEditingDepto(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nuevo
-                    </button>
+                    {canManage && (
+                        <button onClick={() => { setEditingDepto(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nuevo
+                        </button>
+                    )}    
                 </div>
                 
                 <div className="bg-secondary border border-theme rounded-xl p-4">
@@ -106,10 +111,12 @@ export default function DepartamentosList() {
                                 <p className="font-semibold text-primary">{depto.nombre}</p>
                                 <p className="text-sm text-secondary">{depto.descripcion || 'Sin descripción'}</p>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setEditingDepto(depto); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                <button onClick={() => handleDelete(depto.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                            </div>
+                            {canManage && (
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setEditingDepto(depto); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(depto.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>

@@ -5,6 +5,7 @@ import { PiggyBank, Plus, Edit, Trash2, Loader, Building2 } from 'lucide-react';
 import { getPresupuestos, createPresupuesto, updatePresupuesto, deletePresupuesto, getDepartamentos } from '../../api/dataService';
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
+import { usePermissions } from '../../hooks/usePermissions';
 
 // --- Componentes de ayuda del Formulario ---
 const FormInput = ({ label, ...props }) => (
@@ -92,6 +93,7 @@ export default function PresupuestosList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPresupuesto, setEditingPresupuesto] = useState(null);
     const { showNotification } = useNotification();
+    const { hasPermission, loadingPermissions } = usePermissions();
 
     const fetchPresupuestos = async () => {
         try {
@@ -106,6 +108,7 @@ export default function PresupuestosList() {
         }
     };
 
+    const canManage = !loadingPermissions && hasPermission('manage_presupuesto');
     useEffect(() => { fetchPresupuestos(); }, []);
 
     const handleCloseModal = () => {
@@ -151,9 +154,11 @@ export default function PresupuestosList() {
                         <h1 className="text-4xl font-bold text-primary mb-2">Presupuestos</h1>
                         <p className="text-secondary">Gestiona los presupuestos asignados a los departamentos.</p>
                     </div>
-                    <button onClick={() => { setEditingPresupuesto(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nuevo Presupuesto
-                    </button>
+                    {canManage && (
+                        <button onClick={() => { setEditingPresupuesto(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nuevo Presupuesto
+                        </button>
+                    )}
                 </div>
                 
                 <div className="bg-secondary border border-theme rounded-xl p-4">
@@ -178,10 +183,12 @@ export default function PresupuestosList() {
                                 <p className="text-sm text-primary">{item.descripcion || 'Sin descripción'}</p>
                                 <p className="text-sm text-secondary">{new Date(item.fecha + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setEditingPresupuesto(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                            </div>
+                            {canManage && (
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setEditingPresupuesto(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>

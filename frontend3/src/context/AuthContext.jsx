@@ -3,12 +3,15 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { jwtDecode } from 'jwt-decode'; // <-- 1. Importar
 import { login as apiLogin, register as apiRegister } from '../api/authService';
 import { setAuthToken } from '../api/axiosConfig';
+//import { clearRoleCache } from '../hooks/usePermissions';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null); // <-- 2. Añadir estado de usuario
+    const [userRoles, setUserRoles] = useState([]); // <-- NUEVO ESTADO PARA ROLES
+    const [userIsAdmin, setUserIsAdmin] = useState(false);    
     const [loading, setLoading] = useState(true);
 
     // Función para manejar el token y los datos del usuario
@@ -23,6 +26,8 @@ export const AuthProvider = ({ children }) => {
                 nombre_completo: decodedToken.nombre_completo,
                 empresa_nombre: decodedToken.empresa_nombre
             });
+            setUserRoles(decodedToken.roles || []);
+            setUserIsAdmin(decodedToken.is_admin || false);
 
             localStorage.setItem('token', access_token);
             setAuthToken(access_token);
@@ -69,11 +74,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         setAuthToken(null);
         setIsAuthenticated(false);
-        setUser(null); // <-- 3. Limpiar usuario al salir
+        setUser(null); 
+        setUserRoles([]);
+        setUserIsAdmin(false);
+        //clearRoleCache();
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, loading, user, login, logout, registerAndLogin }}>
+        <AuthContext.Provider value={{ isAuthenticated, loading, user, userRoles, userIsAdmin,login, logout, registerAndLogin }}>
             {children}
         </AuthContext.Provider>
     );

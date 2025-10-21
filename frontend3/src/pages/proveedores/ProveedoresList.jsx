@@ -5,7 +5,7 @@ import { Truck, Plus, Edit, Trash2, Loader } from 'lucide-react';
 import { getProveedores, createProveedor, updateProveedor, deleteProveedor } from '../../api/dataService'; // Asumimos que ya creaste estas funciones
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
-
+import { usePermissions } from '../../hooks/usePermissions'; 
 // --- Componentes de ayuda del Formulario ---
 const FormInput = ({ label, ...props }) => (
     <div className="flex flex-col">
@@ -63,6 +63,9 @@ export default function ProveedoresList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProveedor, setEditingProveedor] = useState(null);
     const { showNotification } = useNotification();
+    const { hasPermission, loadingPermissions } = usePermissions(); 
+    const canManage = !loadingPermissions && hasPermission('manage_proveedor');
+
 
     const fetchProveedores = async () => {
         try {
@@ -122,9 +125,11 @@ export default function ProveedoresList() {
                         <h1 className="text-4xl font-bold text-primary mb-2">Proveedores</h1>
                         <p className="text-secondary">Gestiona los proveedores de activos y servicios.</p>
                     </div>
-                    <button onClick={() => { setEditingProveedor(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nuevo Proveedor
-                    </button>
+                    {canManage && (
+                        <button onClick={() => { setEditingProveedor(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nuevo Proveedor
+                        </button>
+                    )}
                 </div>
                 
                 <div className="bg-secondary border border-theme rounded-xl p-4">
@@ -153,10 +158,12 @@ export default function ProveedoresList() {
                                 <p className="text-sm text-primary">{item.pais || 'Sin país'}</p>
                                 <p className="text-sm text-secondary">{item.direccion || 'Sin dirección'}</p>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setEditingProveedor(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                            </div>
+                            {canManage && (    
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setEditingProveedor(item); setIsModalOpen(true); }} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                    <button onClick={() => handleDelete(item.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>

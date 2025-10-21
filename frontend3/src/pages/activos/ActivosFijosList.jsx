@@ -8,6 +8,7 @@ import {
 } from '../../api/dataService';
 import Modal from '../../components/Modal';
 import { useNotification } from '../../context/NotificacionContext';
+import { usePermissions } from '../../hooks/usePermissions'; 
 
 // --- Formulario de Activo Fijo ---
 const ActivoFijoForm = ({ activo, onSave, onCancel }) => {
@@ -144,6 +145,8 @@ export default function ActivosFijosList() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingActivo, setEditingActivo] = useState(null);
     const { showNotification } = useNotification();
+    const { hasPermission, loadingPermissions } = usePermissions();
+    const canManage = !loadingPermissions && hasPermission('manage_activo');
 
     const fetchActivosFijos = async () => {
         try {
@@ -228,10 +231,12 @@ export default function ActivosFijosList() {
                     <div>
                         <h1 className="text-4xl font-bold text-primary mb-2">Activos Fijos</h1>
                         <p className="text-secondary">Gestiona los bienes y propiedades de tu empresa.</p>
-                    </div>
-                    <button onClick={openEditModal} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
-                        <Plus size={20} /> Nuevo Activo
-                    </button>
+                    </div>                    
+                    {canManage && (
+                        <button onClick={openEditModal} className="flex items-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg hover:bg-opacity-90 transition-transform active:scale-95">
+                            <Plus size={20} /> Nuevo Activo
+                        </button>
+                    )}
                 </div>
                 
                 {/* --- Contenedor de la lista --- */}
@@ -275,10 +280,12 @@ export default function ActivosFijosList() {
                                     </div>
                                 </div>
                                 {/* Botones de Acción */}
-                                <div className="flex gap-2 ml-auto mt-2 md:mt-0 md:ml-4">
-                                    <button onClick={() => openEditModal(activo)} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
-                                    <button onClick={() => handleDelete(activo.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
-                                </div>
+                                {canManage && (
+                                    <div className="flex gap-2 ml-auto mt-2 md:mt-0 md:ml-4">
+                                        <button onClick={() => openEditModal(activo)} className="p-2 text-primary hover:text-accent"><Edit size={18} /></button>
+                                        <button onClick={() => handleDelete(activo.id)} className="p-2 text-primary hover:text-red-500"><Trash2 size={18} /></button>
+                                    </div>
+                                )}
                             </motion.div>
                         ))
                     )}

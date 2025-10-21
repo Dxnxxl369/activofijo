@@ -2,6 +2,7 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User
+from .permissions import check_permission, HasPermission
 from .models import *
 
 class EmpresaSerializer(serializers.ModelSerializer):
@@ -9,40 +10,32 @@ class EmpresaSerializer(serializers.ModelSerializer):
         model = Empresa
         fields = ['id', 'nombre', 'nit']
 
-#class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-#    @classmethod
-#    def get_token(cls, user):
-#        token = super().get_token(user)
-#        try:
-#            empleado = user.empleado
-#            token['empresa_id'] = str(empleado.empresa.id)
-#            token['empresa_nombre'] = empleado.empresa.nombre
-#            token['nombre_completo'] = f"{user.first_name} {empleado.apellido_p}"
-#        except Empleado.DoesNotExist:
-#            token['empresa_id'] = None
-#            token['empresa_nombre'] = None
-#            token['nombre_completo'] = user.username
-#        return token
-
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         try:
             empleado = user.empleado
-            # --- AÑADE/ASEGURA ESTAS LÍNEAS ---
             token['username'] = user.username
             token['email'] = user.email
             token['nombre_completo'] = f"{user.first_name} {empleado.apellido_p}"
             token['empresa_id'] = str(empleado.empresa.id)
             token['empresa_nombre'] = empleado.empresa.nombre
-            # --- FIN ---
+            
+            # --- !!! CHANGE THIS LINE !!! ---
+            # Send role NAMES instead of IDs
+            token['roles'] = [rol.nombre for rol in empleado.roles.all()] 
+            # --- END OF CHANGE ---
+            
+            token['is_admin'] = user.is_staff 
         except Empleado.DoesNotExist:
             token['username'] = user.username
             token['email'] = user.email
             token['nombre_completo'] = user.username
             token['empresa_id'] = None
             token['empresa_nombre'] = None
+            token['roles'] = [] # Keep this empty
+            token['is_admin'] = user.is_staff
         return token
 
 # --- CLASE FALTANTE AÑADIDA AQUÍ ---
@@ -62,6 +55,12 @@ class DepartamentoSerializer(serializers.ModelSerializer):
         model = Departamento
         fields = '__all__'
         read_only_fields = ('empresa',)
+
+class RolesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Roles
+        fields = '__all__'
+        read_only_fields = ('empresa',)
         
 class EmpleadoSerializer(serializers.ModelSerializer):
     # Ahora 'UsuarioSerializer' está definido y esta línea funcionará
@@ -71,17 +70,50 @@ class EmpleadoSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True)
     email = serializers.EmailField(write_only=True)
     
+    roles = serializers.PrimaryKeyRelatedField(
+        queryset=Roles.objects.all(), 
+        many=True, 
+        write_only=True, 
+        required=False # Hazlo opcional si un empleado puede no tener roles
+    )
+
     class Meta:
         model = Empleado
-        fields = '__all__'        
-        read_only_fields = ('empresa',)
+        # Asegúrate de incluir 'roles' en los fields si quieres leerlos,
+        # pero para escribir usamos el campo write_only de arriba.
+        # Quitamos '__all__' para ser explícitos
+        fields = [
+            'id', 'usuario', 'ci', 'apellido_p', 'apellido_m', 
+            'direccion', 'telefono', 'sueldo', 'cargo', 
+            'departamento', 'empresa', 
+            # Campos write_only para la creación/actualización del usuario
+            'username', 'password', 'first_name', 'email', 
+            # Campo write_only para asignar roles
+            'roles', 
+             # Campos read_only que se añadirán al leer
+            'cargo_nombre', 'departamento_nombre', 'roles_asignados' 
+        ]      
+        read_only_fields = ('empresa', 'usuario', 'cargo_nombre', 'departamento_nombre', 'roles_asignados') # Añade campos calculados
+        # Campo extra para mostrar nombres en la lectura
+        extra_kwargs = {
+            'cargo': {'write_only': True, 'required': False, 'allow_null': True}, # Espera ID al escribir
+            'departamento': {'write_only': True, 'required': False, 'allow_null': True}, # Espera ID al escribir
+        }
+
+    # --- Campos extra para la lectura ---
+    cargo_nombre = serializers.CharField(source='cargo.nombre', read_only=True, allow_null=True)
+    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True, allow_null=True)
+    roles_asignados = RolesSerializer(source='roles', many=True, read_only=True) # Serializador anidado para leer
+
+    # --- MÉTODO CREATE CORREGIDO ---
 
     def create(self, validated_data):
         username = validated_data.pop('username')
         password = validated_data.pop('password')
         first_name = validated_data.pop('first_name')
         email = validated_data.pop('email')
-        
+        roles_data = validated_data.pop('roles', [])
+
         user = User.objects.create_user(
             username=username,
             password=password,
@@ -92,6 +124,8 @@ class EmpleadoSerializer(serializers.ModelSerializer):
         )
         
         empleado = Empleado.objects.create(usuario=user, **validated_data)
+        if roles_data: # Solo si se enviaron roles
+            empleado.roles.set(roles_data)
         return empleado
 
 class ActivoFijoSerializer(serializers.ModelSerializer):
@@ -113,11 +147,7 @@ class PresupuestoSerializer(serializers.ModelSerializer):
         fields = ['id', 'descripcion', 'monto', 'fecha', 'departamento', 'departamento_id']
         read_only_fields = ('empresa',)
         
-class RolesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Roles
-        fields = '__all__'
-        read_only_fields = ('empresa',)
+
 
 class CategoriaActivoSerializer(serializers.ModelSerializer):
     class Meta:
